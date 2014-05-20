@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>GenerateTimexReferences</id>
+        <version>1.0.0</version>
+        <authors>Сборная солянка</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Генерируется список dll из reference solution</description>
+    </metadata>
+    <files>
+        <file src="..\Source\_output\Release\CommandLine.dll" target="tools\CommandLine.dll" />
+        <file src="..\Source\_output\Release\GenerateTimexReferences.exe" target="tools\GenerateTimexReferences.exe" />
+        <file src="..\Source\_output\Release\GenerateTimexReferences.exe.config" target="tools\GenerateTimexReferences.exe.config" />
+    </files>
+</package>
