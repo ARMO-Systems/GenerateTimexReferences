@@ -10,7 +10,7 @@ if not "%PackageVersion%" == "" (
 )
 
 "%nuget%" restore Source\Main.sln -NoCache -NonInteractive
-"%programfiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe" Source\Main.sln /p:Configuration="%config%" /p:Platform="Any CPU" /m /v:M /fl /flp:LogFile=msbuild.log;Verbosity=Normal /nr:false
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MSBuild.exe" Source\Main.sln /p:Configuration="%config%" /p:Platform="Any CPU" /m /v:M /fl /flp:LogFile=msbuild.log;Verbosity=Normal /nr:false
 
 
 cd Packs
