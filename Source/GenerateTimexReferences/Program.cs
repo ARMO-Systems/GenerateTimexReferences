@@ -19,7 +19,7 @@ namespace ArmoSystems.ArmoGet.GenerateTimexReferences
 
             new Parser().ParseArguments( Environment.GetCommandLineArgs(), options );
 
-// ReSharper disable once AssignNullToNotNullAttribute
+            // ReSharper disable once AssignNullToNotNullAttribute
             parentDir = Path.Combine( Environment.GetEnvironmentVariable( "TimexCommonTimexPath" ), "Source" );
             var projectFiles = FindProjects( string.Format( "{0}.csproj", options.ProjectName ) ).ToList();
 
@@ -28,10 +28,10 @@ namespace ArmoSystems.ArmoGet.GenerateTimexReferences
                 DeadFiles.Search( parentDir, projectFiles );
                 return;
             }
-            var dependentProjects = projectFiles.SelectMany( GetDependentProjects ).Distinct().ToList();
-            var devExpressReferences = dependentProjects.SelectMany( GetDevExpressReferences ).Distinct().ToList();
 
-// ReSharper disable once AssignNullToNotNullAttribute
+            var devExpressReferences = projectFiles.SelectMany( GetDevExpressReferences ).Distinct().ToList();
+
+            // ReSharper disable once AssignNullToNotNullAttribute
             using ( TextWriter writer = File.CreateText( Path.Combine( Environment.GetEnvironmentVariable( "TimexCommonTempPath" ), options.FileName + ".txt" ) ) )
                 devExpressReferences.ForEach( writer.WriteLine );
         }
@@ -41,44 +41,45 @@ namespace ArmoSystems.ArmoGet.GenerateTimexReferences
             return Directory.GetFiles( parentDir, projectName, SearchOption.AllDirectories ).ToList();
         }
 
-        private static IEnumerable< string > GetDependentProjects( string projectPath )
-        {
-            var dependentProjects = new List< string > { projectPath };
-            dependentProjects.AddRange( GetReference( projectPath, ReferenceType.ProjectReference ).SelectMany( item =>
-                                                                                                                {
-                                                                                                                    var path = FindProjects( Regex.Match( item, @"[^\\]+.csproj" ).Value ).First();
-                                                                                                                    dependentProjects.AddRange( GetDependentProjects( path ) );
-                                                                                                                    return dependentProjects;
-                                                                                                                } ).ToList() );
-            return dependentProjects;
-        }
-
         private static List< string > GetDevExpressReferences( string projectPath )
         {
-            return GetReference( projectPath, ReferenceType.Reference ).Select( item =>
-                                                                                {
-                                                                                    var matchResult = Regex.Match( item, @"(DevExpress.*?)," );
-                                                                                    return matchResult.Success ? matchResult.Groups[ 1 ].Value.Trim() : string.Empty;
-                                                                                } ).Where( item => !string.IsNullOrEmpty( item ) ).ToList();
+            return GetReference( projectPath, ReferenceType.Reference ).
+                   Select( item =>
+                           {
+                               var matchResult = Regex.Match( item, @"(DevExpress.*?)," );
+                               return matchResult.Success ? matchResult.Groups[ 1 ].Value.Trim() : string.Empty;
+                           } ).
+                   Where( item => !string.IsNullOrEmpty( item ) ).
+                   ToList();
         }
 
         private static IEnumerable< string > GetReference( string csprojFile, ReferenceType referenceType )
         {
-            XNamespace msbuild = "http://schemas.microsoft.com/developer/msbuild/2003";
-            return
-                XDocument.Load( csprojFile ).
-                    Element( msbuild + "Project" ).
-                    Elements( msbuild + "ItemGroup" ).
-                    Elements( msbuild + ( referenceType == ReferenceType.ProjectReference ? "ProjectReference" : "Reference" ) ).
-                    Attributes( "Include" ).
-                    Select( item => item.Value ).
-                    ToList();
+            try
+            {
+                return GetReferenceWithMSbuild( csprojFile, referenceType, "http://schemas.microsoft.com/developer/msbuild/2003" );
+            }
+            catch ( NullReferenceException )
+            {
+                return GetReferenceWithMSbuild( csprojFile, referenceType, string.Empty );
+            }
+        }
+
+        private static IEnumerable< string > GetReferenceWithMSbuild( string csprojFile, ReferenceType referenceType, XNamespace msbuild )
+        {
+            return XDocument.Load( csprojFile ).
+                             Element( msbuild + "Project" ).
+                             Elements( msbuild + "ItemGroup" ).
+                             Elements( msbuild + ( referenceType == ReferenceType.ProjectReference ? "ProjectReference" : "Reference" ) ).
+                             Attributes( "Include" ).
+                             Select( item => item.Value ).
+                             ToList();
         }
 
         private enum ReferenceType
         {
             ProjectReference,
             Reference
-        };
+        }
     }
 }
